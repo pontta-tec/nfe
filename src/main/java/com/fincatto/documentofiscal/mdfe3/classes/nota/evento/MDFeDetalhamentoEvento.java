@@ -1,18 +1,18 @@
 package com.fincatto.documentofiscal.mdfe3.classes.nota.evento;
 
-import java.math.BigDecimal;
-
+import com.fincatto.documentofiscal.DFBase;
+import com.fincatto.documentofiscal.mdfe3.classes.nota.evento.cancelamento.MDFeEnviaEventoCancelamento;
+import com.fincatto.documentofiscal.validadores.BigDecimalValidador;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 
-import com.fincatto.documentofiscal.DFBase;
-import com.fincatto.documentofiscal.mdfe3.classes.nota.evento.cancelamento.MDFeEnviaEventoCancelamento;
-import com.fincatto.documentofiscal.validadores.BigDecimalParser;
+import java.math.BigDecimal;
 
 /**
  * Created by Eldevan Nery Junior on 17/11/17.
  */
 public class MDFeDetalhamentoEvento extends DFBase {
+
     private static final long serialVersionUID = 4567286592593410285L;
 
     @Attribute(name = "versaoEvento")
@@ -30,12 +30,15 @@ public class MDFeDetalhamentoEvento extends DFBase {
     @Element(name = "evEncMDFe", required = false)
     private MDFeEnviaEventoEncerramento enviaEventoEncerramento;
 
+    @Element(name = "evIncCondutorMDFe", required = false)
+    private MDFeEnviaEventoIncluirCondutor enviaEventoIncluirCondutor;
+
     public String getVersaoEvento() {
         return this.versaoEvento;
     }
 
     public void setVersaoEvento(final BigDecimal versaoEvento) {
-        this.versaoEvento = BigDecimalParser.tamanho5Com2CasasDecimais(versaoEvento, "versao do Evento");
+        this.versaoEvento = BigDecimalValidador.tamanho5Com2CasasDecimais(versaoEvento, "versao do Evento");
     }
 
     public MDFeEnviaEventoCancelamento getMdFeEnviaEventoCancelamento() {
@@ -69,4 +72,13 @@ public class MDFeDetalhamentoEvento extends DFBase {
     public void setEnviaEventoEncerramento(final MDFeEnviaEventoEncerramento enviaEventoEncerramento) {
         this.enviaEventoEncerramento = enviaEventoEncerramento;
     }
+
+    public MDFeEnviaEventoIncluirCondutor getEnviaEventoIncluirCondutor() {
+        return enviaEventoIncluirCondutor;
+    }
+
+    public void setEnviaEventoIncluirCondutor(MDFeEnviaEventoIncluirCondutor enviaEventoIncluirCondutor) {
+        this.enviaEventoIncluirCondutor = enviaEventoIncluirCondutor;
+    }
+
 }

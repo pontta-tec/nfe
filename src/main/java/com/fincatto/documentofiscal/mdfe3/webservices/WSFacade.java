@@ -1,7 +1,6 @@
 package com.fincatto.documentofiscal.mdfe3.webservices;
 
 import com.fincatto.documentofiscal.DFUnidadeFederativa;
-import com.fincatto.documentofiscal.DFSocketFactory;
 import com.fincatto.documentofiscal.mdfe3.MDFeConfig;
 import com.fincatto.documentofiscal.mdfe3.classes.consultaRecibo.MDFeConsultaReciboRetorno;
 import com.fincatto.documentofiscal.mdfe3.classes.consultanaoencerrados.MDFeConsultaNaoEncerradosRetorno;
@@ -10,8 +9,8 @@ import com.fincatto.documentofiscal.mdfe3.classes.lote.envio.MDFEnvioLote;
 import com.fincatto.documentofiscal.mdfe3.classes.lote.envio.MDFEnvioLoteRetornoDados;
 import com.fincatto.documentofiscal.mdfe3.classes.nota.consulta.MDFeNotaConsultaRetorno;
 import com.fincatto.documentofiscal.mdfe3.classes.nota.evento.MDFeRetorno;
+import com.fincatto.documentofiscal.utils.DFSocketFactory;
 import org.apache.commons.httpclient.protocol.Protocol;
-import java.time.LocalDate;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -19,20 +18,20 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.time.LocalDate;
 
 public class WSFacade {
 
-
-	private final WSStatusConsulta wsStatusConsulta;
-	private final WSRecepcaoLote wsRecepcaoLote;
-	private final WSNotaConsulta wsNotaConsulta;
+    private final WSStatusConsulta wsStatusConsulta;
+    private final WSRecepcaoLote wsRecepcaoLote;
+    private final WSNotaConsulta wsNotaConsulta;
     private final WSCancelamento wsCancelamento;
     private final WSEncerramento wsEncerramento;
     private final WSConsultaRecibo wsConsultaRecibo;
     private final WSConsultaNaoEncerrados wsConsultaNaoEncerrados;
+    private final WSIncluirCondutor wsIncluirCondutor;
 
 //	private final WSRecepcaoLoteRetorno wsRecepcaoLoteRetorno;
-
     public WSFacade(final MDFeConfig config) throws IOException, KeyManagementException, UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
         Protocol.registerProtocol("https", new Protocol("https", new DFSocketFactory(config), 443));
         this.wsStatusConsulta = new WSStatusConsulta(config);
@@ -43,6 +42,7 @@ public class WSFacade {
         this.wsEncerramento = new WSEncerramento(config);
         this.wsConsultaRecibo = new WSConsultaRecibo(config);
         this.wsConsultaNaoEncerrados = new WSConsultaNaoEncerrados(config);
+        this.wsIncluirCondutor = new WSIncluirCondutor(config);
     }
 
     /**
@@ -51,11 +51,12 @@ public class WSFacade {
      * @param mdfEnvioLote a ser eviado para a SEFAZ
      * @return dados do retorno do envio do lote e o xml assinado
      * @throws Exception caso nao consiga gerar o xml ou problema de conexao com o sefaz
-     * */
+     *
+     */
     public MDFEnvioLoteRetornoDados envioRecepcaoLote(MDFEnvioLote mdfEnvioLote) throws Exception {
         return this.wsRecepcaoLote.envioRecepcao(mdfEnvioLote);
     }
-    
+
     /**
      * Faz a consulta de status responsavel pela UF, no caso apenas o RS está disponível
      *
@@ -90,9 +91,9 @@ public class WSFacade {
     /**
      * Faz o cancelamento do MDFe
      *
-     * @param chave     chave de acesso da nota
+     * @param chave chave de acesso da nota
      * @param numeroProtocolo numero do protocolo da nota
-     * @param motivo          motivo do cancelamento
+     * @param motivo motivo do cancelamento
      * @return dados do cancelamento da nota retornado pelo webservice
      * @throws Exception caso nao consiga gerar o xml ou problema de conexao com o sefaz
      */
@@ -104,7 +105,7 @@ public class WSFacade {
      * Faz o cancelamento da nota com evento ja assinado
      * ATENCAO: Esse metodo deve ser utilizado para assinaturas A3
      *
-     * @param chave       chave de acesso da nota
+     * @param chave chave de acesso da nota
      * @param eventoAssinadoXml evento ja assinado em formato XML
      * @return dados do cancelamento da nota retornado pelo webservice
      * @throws Exception caso nao consiga gerar o xml ou problema de conexao com o sefaz
@@ -114,16 +115,31 @@ public class WSFacade {
     }
 
     /**
-     * Faz o cancelamento do MDFe
+     * Faz o encerramento do MDFe
      *
-     * @param chaveAcesso     chave de acesso da nota
+     * @param chaveAcesso chave de acesso da nota
      * @param numeroProtocolo numero do protocolo da nota
+     * @param codigoMunicipio Informar o código do município do encerramento do manifesto
+     * @param dataEncerramento Data em que o manifesto foi encerrado.
+     * @param unidadeFederativa Informar a UF de encerramento do manifesto
      * @return dados do encerramento da nota retornado pelo webservice
      * @throws Exception caso nao consiga gerar o xml ou problema de conexao com o sefaz
      */
-    public MDFeRetorno encerramento(final String chaveAcesso, final String numeroProtocolo
-            , final String codigoMunicipio, final LocalDate dataEncerramento, final DFUnidadeFederativa unidadeFederativa) throws Exception {
+    public MDFeRetorno encerramento(final String chaveAcesso, final String numeroProtocolo,
+            final String codigoMunicipio, final LocalDate dataEncerramento, final DFUnidadeFederativa unidadeFederativa) throws Exception {
         return this.wsEncerramento.encerraMdfe(chaveAcesso, numeroProtocolo, codigoMunicipio, dataEncerramento, unidadeFederativa);
+    }
+
+    /**
+     * Faz o encerramento do MDFe assinado
+     *
+     * @param chaveAcesso
+     * @param eventoAssinadoXml
+     * @return
+     * @throws Exception
+     */
+    public MDFeRetorno encerramentoAssinado(final String chaveAcesso, final String eventoAssinadoXml) throws Exception {
+        return this.wsEncerramento.encerramentoMdfeAssinado(chaveAcesso, eventoAssinadoXml);
     }
 
     /**
@@ -146,6 +162,31 @@ public class WSFacade {
      */
     public MDFeConsultaNaoEncerradosRetorno consultaNaoEncerrados(final String cnpj) throws Exception {
         return this.wsConsultaNaoEncerrados.consultaNaoEncerrados(cnpj);
+    }
+
+    /**
+     * Faz a inclusão de condutor do veículo de MDF-e Rodoviário.
+     *
+     * @param chaveAcesso
+     * @param nomeCondutor
+     * @param cpfCondutor
+     * @return
+     * @throws Exception
+     */
+    public MDFeRetorno incluirCondutor(final String chaveAcesso, final String nomeCondutor, final String cpfCondutor) throws Exception {
+        return this.wsIncluirCondutor.incluirCondutor(chaveAcesso, nomeCondutor, cpfCondutor);
+    }
+
+    /**
+     * Faz a inclusão de condutor do veículo de MDF-e Rodoviário evento assinado
+     *
+     * @param chaveAcesso
+     * @param eventoAssinadoXml
+     * @return
+     * @throws Exception
+     */
+    public MDFeRetorno incluirCondutorAssinado(final String chaveAcesso, final String eventoAssinadoXml) throws Exception {
+        return this.wsIncluirCondutor.incluirCondutorAssinado(chaveAcesso, eventoAssinadoXml);
     }
 
 }
